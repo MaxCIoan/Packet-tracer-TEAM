@@ -1,0 +1,59 @@
+ENTERPRISE TOPOLOGY – SSH + AAA CONFIGURATION COMMAND LOG
+
+Devices Configured: - R2-BACKUP (Router 2) - SW3 - SW4 - SW-DMZ (if
+applicable)
+
+  ---------------------------
+  1) HOSTNAME CONFIGURATION
+  ---------------------------
+
+conf t hostname R2-BACKUP end wr
+
+conf t hostname SW3 end wr
+
+conf t hostname SW4 end wr
+
+  --------------------------------------------------
+  2) SSH + RSA KEY GENERATION (RUN ON EACH DEVICE)
+  --------------------------------------------------
+
+conf t ip domain-name corp.local crypto key generate rsa
+
+(When prompted: enter 1024 for modulus size)
+
+ip ssh version 2 end wr
+
+  ---------------------------
+  3) LOCAL ADMIN + SECURITY
+  ---------------------------
+
+conf t username localbackup privilege 15 secret LocalFailover!123 enable
+secret StrongEnable!123 service password-encryption end wr
+
+  --------------------------------------------------------
+  4) AAA ENABLEMENT (TACACS+ - PACKET TRACER COMPATIBLE)
+  --------------------------------------------------------
+
+conf t aaa new-model tacacs-server host 172.16.10.10 key TACKEY123 aaa
+authentication login default group tacacs+ local aaa accounting exec
+default start-stop group tacacs+ line vty 0 4 login authentication
+default transport input ssh exec-timeout 4 0 line con 0 login
+authentication default exec-timeout 10 0 end wr
+
+  --------------------------
+  5) VERIFICATION COMMANDS
+  --------------------------
+
+show ip ssh show crypto key mypubkey rsa show run | include hostname
+show run | include aaa show run | section line vty
+
+  -----------------------------
+  SECURITY OBJECTIVE ACHIEVED
+  -----------------------------
+
+-   SSH v2 enabled
+-   RSA keys generated
+-   Local admin fallback configured
+-   Centralized TACACS+ AAA authentication
+-   Console protected via AAA
+-   Telnet disabled
